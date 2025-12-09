@@ -154,20 +154,29 @@ with tab1:
             base_inv = first_row['Tot.Inventory_previous']
             base_date = first_row['Previous Snapshot Date']
             
+            # Formatted headers
+            latest_snap_date = wf_df['Snapshot Date'].max()
+            
             x_vals = [f"Base ({base_date.strftime('%m-%d')})"] + \
-                     wf_df['Snapshot Date'].dt.strftime('%m-%d').tolist() + ["Final"]
+                     wf_df['Snapshot Date'].dt.strftime('%m-%d').tolist() + \
+                     [f"Final ({latest_snap_date.strftime('%m-%d')})"]
             
             y_vals = [base_inv] + wf_df['Delta_Inventory'].tolist() + [None]
             measure = ["absolute"] + ["relative"] * len(wf_df) + ["total"]
             
             fig = go.Figure(go.Waterfall(
-                x=x_vals, measure=measure, y=y_vals, base=0,
+                x=x_vals, measure=measure, y=y_vals, base=base_inv, # Base needs to start at 0 but visual base is first bar
+                # Actually, Plotly Waterfall 'base' param shifts the whole chart? 
+                # No, 'base' is usually 0. The first bar 'measure'='absolute' sets the level.
+                # Let's keep base=0.
                 decreasing={"marker":{"color":"#EF553B"}},
                 increasing={"marker":{"color":"#00CC96"}},
                 totals={"marker":{"color":"#636EFA"}}
             ))
             fig.update_layout(
-                title=f"Evolution of Forecast for {target_date.date()}", 
+                title=f"Forecast Evolution for Target Date: {target_date.date()}", 
+                xaxis_title="Planning Snapshot Date (When the plan was made)",
+                yaxis_title="Projected Inventory Quantity",
                 waterfallgap=0.3,
                 xaxis=dict(type='category')
             )
